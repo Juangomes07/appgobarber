@@ -9,6 +9,8 @@ import * as Yup from 'yup';
 import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
 
+import { useAuth } from '../../hooks/auth';
+
 import getValidationErros from '../../utils/getValidationErros';
 
 import Input from '../../components/Input';
@@ -25,15 +27,19 @@ interface SignInFormData {
   email: string;
   password: string;
 }
+
 const SignIn: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
   const passwordInputRef = useRef<TextInput>(null);
   const navigation = useNavigation();
 
+  const { signIn } = useAuth();
+
   const handleSignIn = useCallback(
     async (data: SignInFormData) => {
       try {
         formRef.current?.setErrors({});
+
         const schema = Yup.object().shape({
           email: Yup.string()
             .email('Digite um e-mail válido')
@@ -45,15 +51,13 @@ const SignIn: React.FC = () => {
           abortEarly: false,
         });
 
-        // await signIn({
-        //   email: data.email,
-        //   password: data.password,
-        // });
-
-        // history.push('/dashboard');
+        await signIn({
+          email: data.email,
+          password: data.password,
+        });
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
-          const errors = getValidationErros(err);
+          const errors = getValidationErrors(err);
 
           formRef.current?.setErrors(errors);
 
@@ -65,7 +69,8 @@ const SignIn: React.FC = () => {
           'Ocorreu um erro ao fazer login, cheque as credenciais.',
         );
       }
-    }, [],
+    },
+    [signIn],
   );
 
   return (
@@ -83,7 +88,7 @@ const SignIn: React.FC = () => {
             <Image source={logoImg} />
 
             <View>
-              <Title>Faça seu Logon</Title>
+              <Title>Faça seu logon</Title>
             </View>
             <Form ref={formRef} onSubmit={handleSignIn}>
               <Input
@@ -111,9 +116,10 @@ const SignIn: React.FC = () => {
                 }}
               />
 
-              <Button onPress={() => {
-                formRef.current?.submitForm();
-              }}
+              <Button
+                onPress={() => {
+                  formRef.current?.submitForm();
+                }}
               >
                 Entrar
               </Button>
@@ -124,13 +130,15 @@ const SignIn: React.FC = () => {
             </ForgotPassword>
           </Container>
         </ScrollView>
-
       </KeyboardAvoidingView>
+
       <CreateAccountButton onPress={() => navigation.navigate('SignUp')}>
         <Icon name="log-in" size={20} color="#ff9000" />
+
         <CreateAccountButtonText>Criar uma conta</CreateAccountButtonText>
       </CreateAccountButton>
     </>
   );
 };
+
 export default SignIn;

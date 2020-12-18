@@ -8,6 +8,8 @@ import { Form } from '@unform/mobile';
 import { FormHandles } from '@unform/core';
 import * as Yup from 'yup';
 
+import api from '../../services/api';
+
 import getValidationErros from '../../utils/getValidationErros';
 
 import Input from '../../components/Input';
@@ -20,7 +22,7 @@ import {
   BackToSignIn, BackToSignInText,
 } from './styles';
 
-interface SignUpFormData{
+interface SignUpFormData {
   name: string;
   email: string;
   password: string;
@@ -37,6 +39,7 @@ const SignUp: React.FC = () => {
     async (data: SignUpFormData) => {
       try {
         formRef.current?.setErrors({});
+
         const schema = Yup.object().shape({
           name: Yup.string().required('Nome obrigatório'),
           email: Yup.string()
@@ -49,23 +52,30 @@ const SignUp: React.FC = () => {
           abortEarly: false,
         });
 
-        // await api.post('/users', data);
-        // history.push('/');
+        await api.post('/users', data);
+
+        Alert.alert(
+          'Cadastro realizado com sucesso!',
+          'Você já pode fazer login na aplicação.',
+        );
+
+        navigation.goBack();
       } catch (err) {
         if (err instanceof Yup.ValidationError) {
-          const errors = getValidationErros(err);
+          const errors = getValidationErrors(err);
 
           formRef.current?.setErrors(errors);
 
           return;
         }
+
         Alert.alert(
-          'Erro na cadastro',
+          'Erro no cadastro',
           'Ocorreu um erro ao fazer cadastro, tente novamente.',
         );
       }
     },
-    [],
+    [navigation],
   );
 
   return (
@@ -85,7 +95,6 @@ const SignUp: React.FC = () => {
             <View>
               <Title>Crie sua conta</Title>
             </View>
-
             <Form ref={formRef} onSubmit={handleSignUp}>
               <Input
                 autoCapitalize="words"
@@ -120,21 +129,26 @@ const SignUp: React.FC = () => {
                 placeholder="Senha"
                 textContentType="newPassword"
                 returnKeyType="send"
-                onSubmitEditing={() => formRef.current?.submitForm()}
+                onSubmitEditing={() => {
+                  formRef.current?.submitForm();
+                }}
               />
 
-              <Button onPress={() => formRef.current?.submitForm()}>Entrar</Button>
+              <Button onPress={() => formRef.current?.submitForm()}>
+                Entrar
+              </Button>
             </Form>
-
           </Container>
         </ScrollView>
-
       </KeyboardAvoidingView>
+
       <BackToSignIn onPress={() => navigation.goBack()}>
         <Icon name="arrow-left" size={20} color="#fff" />
+
         <BackToSignInText>Voltar para logon</BackToSignInText>
       </BackToSignIn>
     </>
   );
 };
+
 export default SignUp;
